@@ -227,6 +227,17 @@ function PdfCompileButton() {
             {t('recompile_from_scratch')}
           </DropdownItem>
         </li>
+        <li role="none">
+          <DropdownItem
+            as="button"
+            onClick={() => alert('Translate clicked')}
+            disabled={compiling}
+            aria-disabled={compiling}
+          >
+            🌍 Translate (dev)
+          </DropdownItem>
+        </li>
+
       </DropdownMenu>
     </Dropdown>
   )
