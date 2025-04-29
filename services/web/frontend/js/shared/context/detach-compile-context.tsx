@@ -64,6 +64,7 @@ export const DetachCompileProvider: FC = ({ children }) => {
     recompileFromScratch: _recompileFromScratch,
     setCompiling: _setCompiling,
     startCompile: _startCompile,
+    startTranslate: _startTranslate,
     stopCompile: _stopCompile,
     setChangedAt: _setChangedAt,
     clearCache: _clearCache,
@@ -338,6 +339,12 @@ export const DetachCompileProvider: FC = ({ children }) => {
     'detached',
     'detacher'
   )
+  const startTranslate = useDetachAction(
+    'startTranslate',
+    _startTranslate,
+    'detached',
+    'detacher'
+  )
   const stopCompile = useDetachAction(
     'stopCompile',
     _stopCompile,
@@ -372,6 +379,7 @@ export const DetachCompileProvider: FC = ({ children }) => {
   )
 
   useCompileTriggers(startCompile, setChangedAt)
+  useCompileTriggers(startTranslate, setChangedAt)
   useLogEvents(setShowLogs)
 
   const value = useMemo(
@@ -418,6 +426,7 @@ export const DetachCompileProvider: FC = ({ children }) => {
       showLogs,
       showCompileTimeWarning,
       startCompile,
+      startTranslate,
       stopCompile,
       stopOnFirstError,
       stopOnValidationError,
@@ -471,6 +480,7 @@ export const DetachCompileProvider: FC = ({ children }) => {
       showCompileTimeWarning,
       showLogs,
       startCompile,
+      startTranslate,
       stopCompile,
       stopOnFirstError,
       stopOnValidationError,

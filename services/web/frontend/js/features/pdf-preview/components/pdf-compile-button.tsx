@@ -45,6 +45,7 @@ function PdfCompileButton() {
     stopOnFirstError,
     stopOnValidationError,
     startCompile,
+    startTranslate,
     stopCompile,
     recompileFromScratch,
   } = useCompileContext()
@@ -84,6 +85,10 @@ function PdfCompileButton() {
       'btn-striped-animated': hasChanges,
     }
   )
+
+  const executeTest = () =>{
+    startTranslate()
+  }
 
   return (
     <Dropdown as={OLButtonGroup} className="compile-button-group">
@@ -230,7 +235,7 @@ function PdfCompileButton() {
         <li role="none">
           <DropdownItem
             as="button"
-            onClick={() => alert('Translate clicked')}
+            onClick={ executeTest}
             disabled={compiling}
             aria-disabled={compiling}
           >

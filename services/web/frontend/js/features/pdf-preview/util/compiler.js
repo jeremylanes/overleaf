@@ -69,6 +69,7 @@ export default class DocumentCompiler {
   // The main "compile" function.
   // Call this directly to run a compile now, otherwise call debouncedAutoCompile.
   async compile(options = {}) {
+    alert('ook appel compiler debut')
     options = { ...this.defaultOptions, ...options }
 
     if (options.isAutoCompileOnLoad && getMeta('ol-preventCompileOnLoad')) {
@@ -114,6 +115,90 @@ export default class DocumentCompiler {
 
       const data = await postJSON(
         `/project/${this.projectId}/compile?${params}`,
+        { body, signal: this.signal }
+      )
+
+      const compileTimeClientE2E = Math.ceil(performance.now() - t0)
+      const { deliveryLatencies, firstRenderDone } = trackPdfDownload(
+        data,
+        compileTimeClientE2E,
+        t0
+      )
+      this.setDeliveryLatencies(() => deliveryLatencies)
+      this.setFirstRenderDone(() => firstRenderDone)
+
+      // unset the error before it's set again later, so that components are recreated and events are tracked
+      this.setError(undefined)
+
+      data.options = options
+      data.rootDocId = rootDocId
+      if (data.clsiServerId) {
+        this.clsiServerId = data.clsiServerId
+      }
+      this.setData(data)
+    } catch (error) {
+      debugConsole.error(error)
+      this.cleanupCompileResult()
+      this.setError(error.info?.statusCode === 429 ? 'rate-limited' : 'error')
+    } finally {
+      this.setCompiling(false)
+    }
+  }
+
+  // The main "compile" function.
+  // Call this directly to run a compile now, otherwise call debouncedAutoCompile.
+  async translate(options = {}) {
+    options = { ...this.defaultOptions, ...options }
+    console.log('translate', options)
+
+    if (options.isAutoCompileOnLoad && getMeta('ol-preventCompileOnLoad')) {
+      return
+    }
+
+    // set "compiling" to true (in the React component's state), and return if it was already true
+    const wasCompiling = this.compilingRef.current
+    this.setCompiling(true)
+
+    if (wasCompiling) {
+      if (options.isAutoCompileOnChange) {
+        this.debouncedAutoCompile()
+      }
+      return
+    }
+
+    try {
+      console.log('open docs', this.openDocs)
+      await this.openDocs.awaitBufferedOps(
+        signalWithTimeout(this.signal, PENDING_OP_MAX_WAIT)
+      )
+
+      // reset values
+      this.setChangedAt(0) // TODO: wait for doc:saved?
+      this.validationIssues = undefined
+
+      const params = this.buildCompileParams(options)
+
+      const t0 = performance.now()
+
+      const rootDocId = this.getRootDocOverrideId()
+
+      console.log('root doc id', rootDocId)
+
+      const body = {
+        rootDoc_id: rootDocId,
+        draft: options.draft,
+        check: 'silent', // NOTE: 'error' and 'validate' are possible, but unused
+        // use incremental compile for all users but revert to a full compile
+        // if there was previously a server error
+        incrementalCompilesEnabled: !this.error,
+        stopOnFirstError: options.stopOnFirstError,
+        editorId: EDITOR_SESSION_ID,
+      }
+
+      console.log('Booody', body)
+
+      const data = await postJSON(
+        `/project/${this.projectId}/translate?${params}`,
         { body, signal: this.signal }
       )
 

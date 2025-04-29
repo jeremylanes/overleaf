@@ -55,6 +55,7 @@ async function blockRestrictedUserFromProject(req, res, next) {
 }
 
 async function ensureUserCanReadProject(req, res, next) {
+  console.log(`Request received NightBird: ${req.method} ${req.url}`)
   const projectId = _getProjectId(req)
   const userId = _getUserId(req)
   const token = TokenAccessHandler.getRequestToken(req, projectId)

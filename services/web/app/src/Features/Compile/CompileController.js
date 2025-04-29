@@ -23,6 +23,8 @@ const {
   RequestFailedError,
 } = require('@overleaf/fetch-utils')
 
+const { spawn } = require('child_process');
+
 const COMPILE_TIMEOUT_MS = 10 * 60 * 1000
 
 const pdfDownloadRateLimiter = new RateLimiter('full-pdf-download', {
@@ -124,6 +126,38 @@ async function _getSplitTestOptions(req, res) {
   }
 }
 const getSplitTestOptionsCb = callbackify(_getSplitTestOptions)
+
+// function runCommand(command, args) {
+//   const { spawn } = require('child_process')
+
+//   return new Promise((resolve, reject) => {
+//     const child = spawn(command, args)
+
+//     let stdout = ''
+//     let stderr = ''
+
+//     child.stdout.on('data', (data) => {
+//       stdout += data.toString()
+//     })
+
+//     child.stderr.on('data', (data) => {
+//       stderr += data.toString()
+//     })
+
+//     child.on('close', (code) => {
+//       if (code === 0) {
+//         resolve({ stdout, stderr })
+//       } else {
+//         reject({ stdout, stderr, code })
+//       }
+//     })
+
+//     child.on('error', (err) => {
+//       reject({ stderr: err.message })
+//     })
+//   })
+// }
+
 
 module.exports = CompileController = {
   compile(req, res, next) {
@@ -254,7 +288,6 @@ module.exports = CompileController = {
       )
     })
   },
-
   stopCompile(req, res, next) {
     const projectId = req.params.Project_id
     const userId = SessionManager.getLoggedInUserId(req.session)
@@ -266,7 +299,146 @@ module.exports = CompileController = {
     })
   },
 
+  translate(req, res, next) {
+    console.log('👉 Début de la traduction...')
+  
+    // 1. Définir les chemins proprement
+    const timestamp = Date.now()
+    const outputDir = Path.join('/tmp', 'latex_translations') // Utiliser /tmp pour les permissions
+    const outputFile = Path.join(outputDir, `flex_maths_${timestamp}.tex`)
+    
+    // 2. Créer le répertoire de sortie si inexistant
+    const fs = require('fs')
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true })
+    }
+  
+    // 3. Paramètres configurables
+    const command = 'latex-translate'
+    const args = [
+      req.body.inputFile || '/opt/latex_translator/maths.tex', // Permettre de spécifier le fichier d'entrée
+      '--source', req.body.sourceLang || 'EN',
+      '--target', req.body.targetLang || 'FR',
+      '--output', outputFile,
+      '--api-key', process.env.DEEPL_API_KEY || '6513f09e-0134-4491-aaa1-4c516cd3ccd4:fx',
+    ]
+  
+    console.log(`🚀 Exécution: ${command} ${args.join(' ')}`)
+  
+    // 4. Lancer le processus avec gestion d'erreur améliorée
+    const translator = spawn(command, args, {
+      stdio: ['ignore', 'pipe', 'pipe'], // Gérer les flux IO explicitement
+      timeout: 300000, // 5 minutes timeout
+    })
+  
+    let stdoutData = ''
+    let stderrData = ''
+  
+    translator.stdout.on('data', data => {
+      const strData = data.toString()
+      stdoutData += strData
+      console.log(`📤 stdout: ${strData}`)
+    })
+  
+    translator.stderr.on('data', data => {
+      const strData = data.toString()
+      stderrData += strData
+      console.error(`❗ stderr: ${strData}`)
+    })
+  
+    translator.on('error', err => {
+      console.error('💥 Erreur lors du spawn:', err)
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Spawn error: ' + err.message,
+        logs: stderrData
+      })
+    })
+  
+    translator.on('close', async code => {
+      console.log(`📦 Process terminé avec code ${code}`)
+      
+      try {
+        // Vérifier que le fichier existe bien
+        await fs.promises.access(outputFile, fs.constants.F_OK)
+        
+        // Lire le contenu pour vérification
+        const content = await fs.promises.readFile(outputFile, 'utf-8')
+        console.log(`✅ Fichier généré (${content.length} caractères)`)
+  
+        return res.json({
+          success: true,
+          message: 'Translation completed',
+          outputFile: outputFile,
+          fileSize: content.length,
+          logs: stdoutData
+        })
+      } catch (fileErr) {
+        console.error('❌ Fichier de sortie non trouvé:', fileErr)
+        return res.status(500).json({
+          success: false,
+          error: `Output file not found (${outputFile})`,
+          exitCode: code,
+          logs: stderrData || stdoutData
+        })
+      }
+    })
+  },
+
+  // translate(req, res, next) {
+  //   console.log('👉 Début de la traduction...')
+  
+  //   const command = 'latex-translate'
+  //   const args = [
+  //     '/opt/latex_translator/maths.tex',
+  //     '--source', 'EN',
+  //     '--target', 'FR',
+  //     '--output', '/var/www/flex_maths.tex',
+  //     '--api-key', '6513f09e-0134-4491-aaa1-4c516cd3ccd4:fx',
+  //   ]
+  
+  //   const translator = spawn(command, args)
+  
+  //   let stdoutData = ''
+  //   let stderrData = ''
+  
+  //   translator.stdout.on('data', data => {
+  //     stdoutData += data.toString()
+  //     console.log(`📤 stdout: ${data.toString()}`)
+  //   })
+  
+  //   translator.stderr.on('data', data => {
+  //     stderrData += data.toString()
+  //     console.error(`❗ stderr: ${data.toString()}`)
+  //   })
+  
+  //   translator.on('error', err => {
+  //     console.error('💥 Erreur lors du spawn:', err)
+  //     res.status(500).json({ success: false, error: 'Spawn error: ' + err.message })
+  //   })
+  
+  //   translator.on('close', code => {
+  //     console.log(`📦 Process terminé avec code ${code}`)
+  //     if (code === 0) {
+  //       return res.json({
+  //         success: true,
+  //         message: 'Translation completed',
+  //         outputFile: '/var/www/flex_maths.tex',
+  //         logs: stdoutData
+  //       })
+  //     } else {
+  //       return res.status(500).json({
+  //         success: false,
+  //         error: `Translation failed with exit code ${code}`,
+  //         logs: stderrData || stdoutData
+  //       })
+  //     }
+  //   })
+  // },
+  
+
   // Used for submissions through the public API
+  
   compileSubmission(req, res, next) {
     res.setTimeout(COMPILE_TIMEOUT_MS)
     const submissionId = req.params.submission_id

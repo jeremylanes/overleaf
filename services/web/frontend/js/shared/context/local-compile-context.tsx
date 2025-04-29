@@ -106,6 +106,7 @@ export type CompileContext = {
   recompileFromScratch: () => void
   setCompiling: (value: boolean) => void
   startCompile: (options?: any) => void
+  startTranslate: (options?: any) => void
   stopCompile: () => void
   setChangedAt: (value: any) => void
   clearCache: () => void
@@ -687,6 +688,16 @@ export const LocalCompileProvider: FC = ({ children }) => {
     [compiler, setCompiledOnce]
   )
 
+  const startTranslate = useCallback(
+    options => {
+     
+      compiler.translate(options)
+    },
+    [compiler, setCompiledOnce]
+  )
+ 
+
+
   // stop a compile manually
   const stopCompile = useCallback(() => {
     compiler.stopCompile()
@@ -789,6 +800,7 @@ export const LocalCompileProvider: FC = ({ children }) => {
       setStopOnValidationError,
       showLogs,
       startCompile,
+      startTranslate,
       stopCompile,
       stopOnFirstError,
       stopOnValidationError,
@@ -839,6 +851,7 @@ export const LocalCompileProvider: FC = ({ children }) => {
       showCompileTimeWarning,
       showLogs,
       startCompile,
+      startTranslate,
       stopCompile,
       stopOnFirstError,
       stopOnValidationError,

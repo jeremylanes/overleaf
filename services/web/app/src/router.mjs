@@ -602,6 +602,15 @@ async function initialize(webRouter, privateApiRouter, publicApiRouter) {
   )
 
   webRouter.post(
+    '/project/:Project_id/translate',
+    RateLimiterMiddleware.rateLimit(rateLimiters.compileProjectHttp, {
+      params: ['Project_id'],
+    }),
+    AuthorizationMiddleware.ensureUserCanReadProject,
+    CompileController.translate
+  )
+
+  webRouter.post(
     '/project/:Project_id/compile/stop',
     AuthorizationMiddleware.ensureUserCanReadProject,
     CompileController.stopCompile

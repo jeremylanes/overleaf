@@ -89,6 +89,12 @@ app.post(
   bodyParser.json({ limit: Settings.compileSizeLimit }),
   CompileController.compile
 )
+app.post(
+  '/project/:project_id/translate',
+  bodyParser.json({ limit: Settings.compileSizeLimit }),
+  CompileController.translate
+)
+
 app.post('/project/:project_id/compile/stop', CompileController.stopCompile)
 app.delete('/project/:project_id', CompileController.clearCache)
 
