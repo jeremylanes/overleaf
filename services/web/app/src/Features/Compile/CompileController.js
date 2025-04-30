@@ -127,36 +127,10 @@ async function _getSplitTestOptions(req, res) {
 }
 const getSplitTestOptionsCb = callbackify(_getSplitTestOptions)
 
-// function runCommand(command, args) {
-//   const { spawn } = require('child_process')
 
-//   return new Promise((resolve, reject) => {
-//     const child = spawn(command, args)
-
-//     let stdout = ''
-//     let stderr = ''
-
-//     child.stdout.on('data', (data) => {
-//       stdout += data.toString()
-//     })
-
-//     child.stderr.on('data', (data) => {
-//       stderr += data.toString()
-//     })
-
-//     child.on('close', (code) => {
-//       if (code === 0) {
-//         resolve({ stdout, stderr })
-//       } else {
-//         reject({ stdout, stderr, code })
-//       }
-//     })
-
-//     child.on('error', (err) => {
-//       reject({ stderr: err.message })
-//     })
-//   })
-// }
+function getMainTexPath(projectId, docId) {
+  return `/var/lib/overleaf/data/compiles/${projectId}-${docId}/main.tex`
+}
 
 
 module.exports = CompileController = {
@@ -315,8 +289,36 @@ module.exports = CompileController = {
   
     // 3. Paramètres configurables
     const command = 'latex-translate'
+    // const rootDocId = req.body.rootDoc_id
+    // const inputFile = `/var/lib/overleaf/data/compiles/${req.params.Project_id}-${rootDocId}/main.tex`
+    let inputFile
+    try {
+      const compileDir = '/var/lib/overleaf/data/compiles'
+      const projectId = req.params.Project_id
+
+      const entries = fs.readdirSync(compileDir)
+      const match = entries.find(entry =>
+        entry.startsWith(`${projectId}-`)
+      )
+
+      if (!match) {
+        return res.status(500).json({
+          success: false,
+          error: `No compiled directory found for project ${projectId}`
+        })
+      }
+
+      inputFile = Path.join(compileDir, match, 'main.tex')
+    } catch (err) {
+      console.error('❌ Erreur lecture dossier de compilation:', err)
+      return res.status(500).json({
+        success: false,
+        error: `Erreur lors de la récupération du fichier main.tex: ${err.message}`
+      })
+    }
+
     const args = [
-      req.body.inputFile || '/opt/latex_translator/maths.tex', // Permettre de spécifier le fichier d'entrée
+      inputFile,
       '--source', req.body.sourceLang || 'EN',
       '--target', req.body.targetLang || 'FR',
       '--output', outputFile,
@@ -377,65 +379,13 @@ module.exports = CompileController = {
         console.error('❌ Fichier de sortie non trouvé:', fileErr)
         return res.status(500).json({
           success: false,
-          error: `Output file not found (${outputFile})`,
+          error: `Output file not found (${outputFile}) | input file - ${inputFile}`,
           exitCode: code,
           logs: stderrData || stdoutData
         })
       }
     })
   },
-
-  // translate(req, res, next) {
-  //   console.log('👉 Début de la traduction...')
-  
-  //   const command = 'latex-translate'
-  //   const args = [
-  //     '/opt/latex_translator/maths.tex',
-  //     '--source', 'EN',
-  //     '--target', 'FR',
-  //     '--output', '/var/www/flex_maths.tex',
-  //     '--api-key', '6513f09e-0134-4491-aaa1-4c516cd3ccd4:fx',
-  //   ]
-  
-  //   const translator = spawn(command, args)
-  
-  //   let stdoutData = ''
-  //   let stderrData = ''
-  
-  //   translator.stdout.on('data', data => {
-  //     stdoutData += data.toString()
-  //     console.log(`📤 stdout: ${data.toString()}`)
-  //   })
-  
-  //   translator.stderr.on('data', data => {
-  //     stderrData += data.toString()
-  //     console.error(`❗ stderr: ${data.toString()}`)
-  //   })
-  
-  //   translator.on('error', err => {
-  //     console.error('💥 Erreur lors du spawn:', err)
-  //     res.status(500).json({ success: false, error: 'Spawn error: ' + err.message })
-  //   })
-  
-  //   translator.on('close', code => {
-  //     console.log(`📦 Process terminé avec code ${code}`)
-  //     if (code === 0) {
-  //       return res.json({
-  //         success: true,
-  //         message: 'Translation completed',
-  //         outputFile: '/var/www/flex_maths.tex',
-  //         logs: stdoutData
-  //       })
-  //     } else {
-  //       return res.status(500).json({
-  //         success: false,
-  //         error: `Translation failed with exit code ${code}`,
-  //         logs: stderrData || stdoutData
-  //       })
-  //     }
-  //   })
-  // },
-  
 
   // Used for submissions through the public API
   

@@ -180,7 +180,8 @@ export default class DocumentCompiler {
 
       const t0 = performance.now()
 
-      const rootDocId = this.getRootDocOverrideId()
+      const rootDocId = this.getRootDocOverrideId() || this.projectRootDocId
+
 
       console.log('root doc id', rootDocId)
 
