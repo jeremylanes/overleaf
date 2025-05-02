@@ -221,6 +221,39 @@ export default class DocumentCompiler {
         this.clsiServerId = data.clsiServerId
       }
       this.setData(data)
+      if (data.translatedContent && typeof data.translatedContent === 'string') {
+        const newText = data.translatedContent
+        const oldText = this.currentDoc?.getSnapshot()
+      
+        if (typeof oldText !== 'string' || oldText === newText) {
+          console.log('[ℹ️] Rien à changer ou texte invalide')
+          return
+        }
+      
+        const op = [
+          {
+            p: [],
+            od: oldText,
+            oi: newText
+          }
+        ]
+      
+        try {
+          console.log('[ℹ️] Envoi de submitOp', op)
+          this.currentDoc.submitOp(op, { source: 'translation' }, (err) => {
+            if (err) {
+              console.error('[❌] Erreur submitOp:', err)
+            } else {
+              console.log('[✅] Texte remplacé avec succès')
+            }
+          })
+        } catch (e) {
+          console.error('[💥] Exception pendant submitOp:', e)
+        }
+      }
+      
+      
+
     } catch (error) {
       debugConsole.error(error)
       this.cleanupCompileResult()

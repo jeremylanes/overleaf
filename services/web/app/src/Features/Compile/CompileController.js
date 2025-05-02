@@ -373,6 +373,7 @@ module.exports = CompileController = {
           message: 'Translation completed',
           outputFile: outputFile,
           fileSize: content.length,
+          translatedContent: content, // 👈 C’est ça qu’il faut pour le front
           logs: stdoutData
         })
       } catch (fileErr) {
