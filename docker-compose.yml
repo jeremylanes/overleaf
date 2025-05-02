@@ -24,7 +24,7 @@ services:
             ####             socket, required for Sibling Containers to work    ####
             ########################################################################
             # - /var/run/docker.sock:/var/run/docker.sock
-            - ./services/web:/overleaf/services/web
+            # - ./services/web:/overleaf/services/web
         environment:
 
             OVERLEAF_APP_NAME: Overleaf Community Edition

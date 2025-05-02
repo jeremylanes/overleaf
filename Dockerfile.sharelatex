@@ -20,9 +20,7 @@ RUN pip install --upgrade pip setuptools && \
 RUN chmod -R 777 /opt/latex_translator
 
 # COPY ./services/web/public /overleaf/services/web/public
-
-# COPY tools/latex_translator/.env /var/www/
-# COPY tools/latex_translator/.env /overleaf/services/web
+COPY ./services/web /overleaf/services/web
 
 # 4. Return to Overleaf default working directory
 WORKDIR /var/www
