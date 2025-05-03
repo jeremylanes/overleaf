@@ -69,7 +69,7 @@ export default class DocumentCompiler {
   // The main "compile" function.
   // Call this directly to run a compile now, otherwise call debouncedAutoCompile.
   async compile(options = {}) {
-    alert('ook appel compiler debut')
+    // alert('ook appel compiler debut')
     options = { ...this.defaultOptions, ...options }
 
     if (options.isAutoCompileOnLoad && getMeta('ol-preventCompileOnLoad')) {
