@@ -6,7 +6,7 @@ import { EDITOR_SESSION_ID, trackPdfDownload } from './metrics'
 import { enablePdfCaching } from './pdf-caching-flags'
 import { debugConsole } from '@/utils/debugging'
 import { signalWithTimeout } from '@/utils/abort-signal'
-
+import { InsertOperation } from '../../../../../types/change'
 const AUTO_COMPILE_MAX_WAIT = 5000
 // We add a 2 second debounce to sending user changes to server if they aren't
 // collaborating with anyone. This needs to be higher than SINGLE_USER_FLUSH_DELAY, and allow for
@@ -230,23 +230,18 @@ export default class DocumentCompiler {
           return
         }
       
-        const op = [
-          {
-            p: [],
-            od: oldText,
-            oi: newText
-          }
-        ]
+        /**
+         * @typedef {Object} InsertOperation
+         * @property {string} i - The inserted text.
+         */
+      
+        const op = /** @type {InsertOperation} */ ({
+          i: newText
+        })
       
         try {
           console.log('[ℹ️] Envoi de submitOp', op)
-          this.currentDoc.submitOp(op, { source: 'translation' }, (err) => {
-            if (err) {
-              console.error('[❌] Erreur submitOp:', err)
-            } else {
-              console.log('[✅] Texte remplacé avec succès')
-            }
-          })
+          this.currentDoc?.submitOp(op)
         } catch (e) {
           console.error('[💥] Exception pendant submitOp:', e)
         }

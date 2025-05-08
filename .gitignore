@@ -8,3 +8,4 @@ tools/latex_translator/
 libraries/promise-utils/node_modules/
 node_modules/
 *.tar
+.idea/
