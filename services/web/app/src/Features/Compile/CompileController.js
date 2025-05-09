@@ -320,7 +320,7 @@ module.exports = CompileController = {
     const args = [
       inputFile,
       '--source', req.body.sourceLang || 'EN',
-      '--target', req.body.targetLang || 'FR',
+      '--target', req.body.targetLang || 'DE',
       '--output', outputFile,
       '--api-key', process.env.DEEPL_API_KEY || '6513f09e-0134-4491-aaa1-4c516cd3ccd4:fx',
     ]

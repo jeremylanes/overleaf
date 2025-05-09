@@ -325,7 +325,8 @@ export default class DocumentCompiler {
         this.setError('error')
       })
       .finally(() => {
-        this.setCompiling(false)
+        this.setCompiling(false);
+        window.location.href = window.location.href;
       })
   }
 
