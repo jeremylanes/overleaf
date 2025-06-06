@@ -76,5 +76,13 @@
     "services/tpdsworker",
     "services/web",
     "tools/saas-e2e"
-  ]
+  ],
+  "version": "1.0.0",
+  "description": "<h1 align=\"center\">   <br>   <a href=\"https://www.overleaf.com\"><img src=\"doc/logo.png\" alt=\"Overleaf\" width=\"300\"></a> </h1>",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "author": "",
+  "license": "ISC"
 }

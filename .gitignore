@@ -5,7 +5,7 @@
 .env
 docker-compose.override.yml
 tools/latex_translator/
-libraries/promise-utils/node_modules/
-node_modules/
-*.tar
+#libraries/promise-utils/node_modules/
+#node_modules/
+sharelatex-latex-translator.tar
 .idea/
